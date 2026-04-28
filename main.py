@@ -2,6 +2,7 @@ from dotenv import load_dotenv
 from typing import TypedDict, Annotated
 from langchain_core.messages import SystemMessage, HumanMessage, BaseMessage, AIMessage
 from langgraph.graph import StateGraph, END, START
+import json
 from chains import generate_chain, reflect_chain
 
 # Define the structure of the agent's state
@@ -11,8 +12,14 @@ class State(TypedDict):
 
 
 def should_reflect(state: State) -> bool:
-    # Simple heuristic: reflect if there are less than 6 messages in the conversation history
-    return state["reflection_count"] < 6
+    '''Determine whether the agent should reflect on the generated tweet based on the conversation history and the number of reflections already performed.'''
+    # Simple heuristic: reflect if there are less than  max_iteration from the config.json file messages in the conversation history
+    # Get max_iterations from the config file
+    with open("config.JSON", "r") as f:
+        config = json.load(f)
+    max_iterations = config.get("max_iterations", 5)  # Default to 5
+
+    return state["reflection_count"] < max_iterations
 
 def generate(state: State) -> State:
     '''Invoke the generation chain to create a twitter post based on the user's request, reflection agent recommendations.'''
