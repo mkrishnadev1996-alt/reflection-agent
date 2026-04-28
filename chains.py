@@ -1,6 +1,6 @@
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-from langchain_core.messages import SystemMessage
-from langchain_groq import ChatGroq
+from langchain_core.messages import SystemMessage, HumanMessage
+from llm import llm
 
 reflection_prompt = ChatPromptTemplate.from_messages(
     [
@@ -16,7 +16,24 @@ generation_prompt = ChatPromptTemplate.from_messages(
     ]
 )
 
-
-llm = ChatGroq()
+# Create chains by combining the prompts with the LLM
 generate_chain = generation_prompt | llm
 reflect_chain = reflection_prompt | llm
+
+if __name__ == "__main__":
+    # Test the generation chain
+    test_messages = [SystemMessage(content="User request: Write a tweet about AI.")]
+    generation_response = generate_chain.invoke(test_messages)
+    print("=== Generation Chain Response ===")
+    # print(generation_response)
+    print(generation_response.content)  # Assuming the generated tweet is the last message in the response
+
+    # Test the reflection chain
+    reflection_response = reflect_chain.invoke(
+        {
+            "messages": test_messages + [HumanMessage(content=generation_response.content)]
+            }
+            )
+
+    print("=== Reflection Chain Response ===")
+    print(reflection_response.content)  # Assuming the generated tweet is the last message in the response
