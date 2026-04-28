@@ -4,7 +4,7 @@ A Twitter post generation agent that uses iterative reflection to improve tweet 
 
 ## Description
 
-This project implements a reflection-based AI agent using LangChain and LangGraph. The agent generates Twitter posts based on user requests and iteratively reflects on them, providing critiques and recommendations for improvement. The process continues up to 6 reflections to refine the tweet.
+This project implements a reflection-based AI agent using LangChain and LangGraph. The agent generates Twitter posts based on user requests and iteratively reflects on them, providing critiques and recommendations for improvement. The process continues up to 3(can be configured) reflections to refine the tweet.
 
 The agent consists of two main components:
 - **Generator**: Creates initial and revised Twitter posts
@@ -14,7 +14,7 @@ The agent consists of two main components:
 
 - AI-powered Twitter post generation
 - Iterative reflection for quality improvement
-- Configurable reflection cycles (up to 6)
+- Configurable reflection cycles (defaults to 3)
 - Fast inference using Groq's LLM
 - Modular chain-based architecture
 
@@ -46,6 +46,11 @@ The agent consists of two main components:
    ```
    GROQ_API_KEY=your_groq_api_key_here
    GROQ_MODEL=openai/gpt-oss-120b
+   (optional)
+   LANGSMITH_TRACING=true
+   LANGSMITH_ENDPOINT=https://eu.api.smith.langchain.com
+   LANGSMITH_API_KEY=your_api_key
+   LANGSMITH_PROJECT="<your_project>"
    ```
 
 ## Usage
@@ -65,7 +70,7 @@ The final output will be the refined tweet along with the number of reflections 
 
 ## Configuration
 
-- **Reflection Count**: Modify the `should_reflect` function in `main.py` to change the maximum number of reflections (default: 6)
+- **Reflection Count**: Modify the `should_reflect` function in `main.py` to change the maximum number of reflections (default: 3)
 - **Prompts**: Customize the generation and reflection prompts in `chains.py`
 - **LLM Model**: Change the model in `llm.py` or via the `GROQ_MODEL` environment variable
 
