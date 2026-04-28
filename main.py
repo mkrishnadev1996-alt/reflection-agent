@@ -17,7 +17,8 @@ def should_reflect(state: State) -> bool:
     # Get max_iterations from the config file
     with open("config.JSON", "r") as f:
         config = json.load(f)
-    max_iterations = config.get("max_iterations", 5)  # Default to 5
+    max_iterations = config.get("max_iterations", 3)  # Default to 3 if not specified
+    print(state["reflection_count"] < max_iterations)
 
     return state["reflection_count"] < max_iterations
 
@@ -26,7 +27,7 @@ def generate(state: State) -> State:
     print("In Generator agent...")
     response = generate_chain.invoke(state["messages"])
     generated_tweet = response.content
-    print(f"Generated Tweet: {generated_tweet}")
+    print(f"==========Generated Tweet============\n {generated_tweet}")
     state["messages"].append(AIMessage(content=generated_tweet))
     return state
 
@@ -36,7 +37,8 @@ def reflect(state: State) -> State:
     state["reflection_count"] += 1
     response = reflect_chain.invoke(state["messages"])
     critique = response.content
-    print(f"Critique and Recommendations: {critique}")
+    # print(f"===============Critique and Recommendations=========== \n{critique}")
+    print(f"Reflection Count: {state['reflection_count']}")
     state["messages"].append(AIMessage(content=critique))
     return state
 
