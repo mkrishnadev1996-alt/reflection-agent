@@ -43,20 +43,20 @@ def reflect(state: State) -> State:
     return state
 
 # Initialize the state graph with the defined schema
-graph =StateGraph(state_schema=State)
+graph_builder =StateGraph(state_schema=State)
 
 # Add Nodes to the graph
-graph.add_node("generate", generate)
-graph.add_node("reflect", reflect)
+graph_builder.add_node("generate", generate)
+graph_builder.add_node("reflect", reflect)
 
 # Add edges to the graph to define the flow of the agent
-graph.add_edge(START, "generate")
-graph.add_conditional_edges("generate", should_reflect, {
+graph_builder.add_edge(START, "generate")
+graph_builder.add_conditional_edges("generate", should_reflect, {
     True: "reflect",
     False: END
 })
-graph.add_edge("reflect", "generate")
-graph_compiled = graph.compile()
+graph_builder.add_edge("reflect", "generate")
+graph = graph_builder.compile()
 
 def main():
     print("Hello from reflection-agent!")
@@ -67,7 +67,7 @@ def main():
     "reflection_count": 0
     }    
     # Run the graph with the initial state
-    final_state = graph_compiled.invoke(initial_state)
+    final_state = graph.invoke(initial_state)
     output_tweet = final_state["messages"][-1].content  # Assuming the final output tweet is the last message in the conversation history
     print("=== Final Output ===")
     print(f"User Request: {user_request}")
