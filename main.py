@@ -1,6 +1,5 @@
-from dotenv import load_dotenv
 from typing import TypedDict, Annotated
-from langchain_core.messages import SystemMessage, HumanMessage, BaseMessage, AIMessage
+from langchain_core.messages import HumanMessage, BaseMessage, AIMessage
 from langgraph.graph import StateGraph, END, START
 import json
 from chains import generate_chain, reflect_chain
@@ -10,15 +9,15 @@ class State(TypedDict):
     messages: Annotated[list[BaseMessage] ,"The conversation history between the user and the agent."]
     reflection_count: Annotated[int, "The number of times the agent has reflected on the generated tweet."]
 
-
+# Get max_iterations from the config file
+with open("config.JSON", "r") as f:
+    config = json.load(f)
+max_iterations = config.get("max_iterations", 3)  # Default to 3 if not specified
+    
 def should_reflect(state: State) -> bool:
     '''Determine whether the agent should reflect on the generated tweet based on the conversation history and the number of reflections already performed.'''
-    # Simple heuristic: reflect if there are less than  max_iteration from the config.json file messages in the conversation history
-    # Get max_iterations from the config file
-    with open("config.JSON", "r") as f:
-        config = json.load(f)
-    max_iterations = config.get("max_iterations", 3)  # Default to 3 if not specified
-    print(state["reflection_count"] < max_iterations)
+    # Simple heuristic: reflect if there are less than  max_iteration from the config.json file messages in the conversation history  
+    # print(state["reflection_count"] < max_iterations)
 
     return state["reflection_count"] < max_iterations
 
@@ -27,7 +26,7 @@ def generate(state: State) -> State:
     print("In Generator agent...")
     response = generate_chain.invoke(state["messages"])
     generated_tweet = response.content
-    print(f"==========Generated Tweet============\n {generated_tweet}")
+    # print(f"==========Generated Tweet============\n {generated_tweet}")
     state["messages"].append(AIMessage(content=generated_tweet))
     return state
 
