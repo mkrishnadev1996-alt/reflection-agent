@@ -1,3 +1,5 @@
 {
-    "max_iterations": 3
+    "max_iterations": 3,
+    "quality_threshold": 8,
+    "enable_quality_check": true
 }

@@ -1,28 +1,31 @@
 from typing import TypedDict, Annotated
-from langchain_core.messages import HumanMessage, BaseMessage, AIMessage 
+from langchain_core.messages import HumanMessage, BaseMessage, AIMessage
 from langgraph.graph import StateGraph, END, START
 from langgraph.graph import add_messages
 import json
+import sys
 from chains import generate_chain, reflect_chain
 
-# Define the structure of the agent's state
 class State(TypedDict):
-    # The conversation history between the user and the agent, including generated tweets and critiques.   
-    # add_messages is a helper function that ensures the list of messages is properly formatted for the graph's state management. It allows us to easily append new messages to the conversation history while maintaining the correct structure.
-    messages: Annotated[list[BaseMessage] ,add_messages] 
+    messages: Annotated[list[BaseMessage] ,add_messages]
     reflection_count: Annotated[int, "The number of times the agent has reflected on the generated tweet."]
+    quality_score: Annotated[int, "The quality score from the latest reflection (1-10)"]
 
-# Get max_iterations from the config file
+# Read configuration from config.JSON
 with open("config.JSON", "r") as f:
     config = json.load(f)
-max_iterations = config.get("max_iterations", 3)  # Default to 3 if not specified
-    
-def should_reflect(state: State) -> bool:
-    '''Determine whether the agent should reflect on the generated tweet based on the conversation history and the number of reflections already performed.'''
-    # Simple heuristic: reflect if there are less than  max_iteration from the config.json file messages in the conversation history  
-    # print(state["reflection_count"] < max_iterations)
+max_iterations = config.get("max_iterations", 3)
+quality_threshold = config.get("quality_threshold", 8)
+quality_enabled = config.get("enable_quality_check", True)
 
-    return state["reflection_count"] < max_iterations
+# Define the condition function to determine whether to continue reflecting or to end the process
+def should_reflect(state: State) -> bool:
+    '''Determine whether the agent should continue reflecting on the generated tweet or end the process. The agent should continue reflecting if the reflection count is less than the maximum allowed iterations and if the quality score is below the specified threshold (if quality check is enabled).'''
+    if state["reflection_count"] >= max_iterations:
+        return False
+    if quality_enabled and state.get("quality_score", 0) >= quality_threshold:
+        return False
+    return True
 
 def generate(state: State) -> dict:
     '''Invoke the generation chain to create a twitter post based on the user's request, reflection agent recommendations.'''
@@ -35,18 +38,21 @@ def generate(state: State) -> dict:
         "messages": [AIMessage(content=generated_tweet)]
     }
 
-def reflect(state: State) -> State:
-    '''Invoke the reflection chain to critique the generated tweet and provide recommendations.'''
+def reflect(state: State) -> dict:
     print("In Reflector agent...")
     new_count = state["reflection_count"] + 1
 
-    # Invoke the reflect_chain with the conversation history to critique the generated tweet and provide recommendations for improvement. The chain will analyze the generated tweet in the context of the user's original request and any previous critiques to offer constructive feedback.
-    critique = reflect_chain.invoke(state["messages"]).content
-    # print(f"===============Critique and Recommendations=========== \n{critique}")
-    print(f"Reflection Count: {state['reflection_count']}")
+    response = reflect_chain.invoke(state["messages"])
+    import json
+    result = json.loads(response.content)
+    quality_score = result["quality_score"]
+    critique = result["critique"]
+
+    print(f"Reflection Count: {state['reflection_count']}, Quality Score: {quality_score}")
     return {
         "messages": [AIMessage(content=critique)],
-        "reflection_count": new_count
+        "reflection_count": new_count,
+        "quality_score": quality_score
     }
 
 # Initialize the state graph with the defined schema
@@ -68,13 +74,15 @@ graph_builder.add_edge("reflect", "generate")
 graph = graph_builder.compile()
 
 def main():
+    sys.stdout.reconfigure(encoding='utf-8')
     print("Hello from reflection-agent!")
     # Get user input
     user_request = input("Please enter your request for a twitter post: ")
     # Initialze the graph state with user input and count to 0
     initial_state: State = {
     "messages": [HumanMessage(content=user_request)],
-    "reflection_count": 0
+    "reflection_count": 0,
+    "quality_score": 0
     }    
     # Invoke the graph with the initial state
     final_state = graph.invoke(initial_state)
@@ -82,6 +90,7 @@ def main():
     print("=== Final Output ===")
     print(f"User Request: {user_request}")
     print(f"Number of Reflections: {final_state['reflection_count']}")
+    print(f"Final Quality Score: {final_state.get('quality_score', 'N/A')}")
     print(f"Final Generated Tweet: {output_tweet}")
 
 if __name__ == "__main__":
