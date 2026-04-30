@@ -91,7 +91,8 @@ The agent stops when **either** condition is met:
 ## Project Structure
 
 - `main.py`: Main script with the LangGraph workflow and hybrid stopping logic
-- `chains.py`: Defines the generation and reflection chains with quality scoring
+- `prompts.py`: Prompt template constants and system messages
+- `chains.py`: Chain definitions combining prompts with LLM, includes ReflectionResponse model
 - `llm.py`: LLM configuration using ChatGroq
 - `config.json`: Configuration for max iterations and quality threshold
 - `requirements.txt`: Python dependencies

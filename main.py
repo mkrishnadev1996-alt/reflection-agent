@@ -6,6 +6,8 @@ import json
 import sys
 from chains import generate_chain, reflect_chain
 
+# Define the state schema for the agent's state graph using a TypedDict. 
+# This schema includes the conversation history (messages), the reflection count, and the quality score from the latest reflection.
 class State(TypedDict):
     messages: Annotated[list[BaseMessage] ,add_messages]
     reflection_count: Annotated[int, "The number of times the agent has reflected on the generated tweet."]
@@ -20,7 +22,11 @@ quality_enabled = config.get("enable_quality_check", True)
 
 # Define the condition function to determine whether to continue reflecting or to end the process
 def should_reflect(state: State) -> bool:
-    '''Determine whether the agent should continue reflecting on the generated tweet or end the process. The agent should continue reflecting if the reflection count is less than the maximum allowed iterations and if the quality score is below the specified threshold (if quality check is enabled).'''
+    '''Determine whether the agent should continue reflecting on the generated tweet or end the process. The agent should continue reflecting if the reflection count is less than the maximum allowed iterations and if the quality score is below the specified threshold (if quality check is enabled).
+
+    Args:        state (State): The current state of the agent, including the conversation history, reflection count, and quality score.
+    Returns:        bool: True if the agent should continue reflecting, False if it should end the process.
+    '''
     if state["reflection_count"] >= max_iterations:
         return False
     if quality_enabled and state.get("quality_score", 0) >= quality_threshold:
@@ -28,7 +34,10 @@ def should_reflect(state: State) -> bool:
     return True
 
 def generate(state: State) -> dict:
-    '''Invoke the generation chain to create a twitter post based on the user's request, reflection agent recommendations.'''
+    '''Invoke the generation chain to create a twitter post based on the user's request, reflection agent recommendations.
+
+    Args:        state (State): The current state of the agent, including the conversation history, reflection count, and quality score.
+    Returns:        dict: A dictionary containing the updated conversation history with the newly generated tweet.'''
     print("In Generator agent...")
 
     # invoke the generate_chain with the conversation history to generate a new tweet. The chain will use the user's request and any critiques or recommendations from the reflection agent to produce a new version of the tweet.
@@ -39,6 +48,10 @@ def generate(state: State) -> dict:
     }
 
 def reflect(state: State) -> dict:
+    '''Invoke the reflection chain to critique the generated tweet and provide a quality score. The reflection agent will analyze the generated tweet, provide detailed feedback, and assign a quality score based on the criteria defined in the reflection system prompt.
+
+    Args:        state (State): The current state of the agent, including the conversation history, reflection count, and quality score.
+    Returns:        dict: A dictionary containing the updated conversation history with the critique from the reflection agent, the updated reflection count, and the quality score from the latest reflection.'''
     print("In Reflector agent...")
     new_count = state["reflection_count"] + 1
 
@@ -74,6 +87,9 @@ graph_builder.add_edge("reflect", "generate")
 graph = graph_builder.compile()
 
 def main():
+    '''Main function to run the reflection agent. This function initializes the agent's state with the user's request, invokes the graph, and prints the final output including the generated tweet, number of reflections, and final quality score.'''
+
+    # Reconfigure stdout to ensure proper encoding for printing the output
     sys.stdout.reconfigure(encoding='utf-8')
     print("Hello from reflection-agent!")
     # Get user input
