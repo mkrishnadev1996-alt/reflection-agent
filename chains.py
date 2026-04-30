@@ -14,8 +14,9 @@ class ReflectionResponse(BaseModel):
 generate_chain = GENERATION_PROMPT | llm
 
 # Reflection chain: takes conversation history -> critiques tweet and provides quality score
-# Uses PydanticOutputParser to ensure the LLM's response is valid JSON that can be parsed into the ReflectionResponse model
-reflect_chain = REFLECTION_PROMPT | llm | PydanticOutputParser(pydantic_object=ReflectionResponse)
+# Uses PydanticOutputParser, bind_tools to ensure the LLM's response is valid Pydantic object
+# that can be parsed into the ReflectionResponse model
+reflect_chain = REFLECTION_PROMPT | llm.bind_tools(tools=[ReflectionResponse]) | PydanticOutputParser(pydantic_object=ReflectionResponse)
 
 if __name__ == "__main__":
     # Test script to verify chains are working correctly
