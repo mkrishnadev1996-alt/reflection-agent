@@ -56,10 +56,11 @@ def reflect(state: State) -> dict:
     new_count = state["reflection_count"] + 1
 
     response = reflect_chain.invoke(state["messages"])
-    import json
-    result = json.loads(response.content)
-    quality_score = result["quality_score"]
-    critique = result["critique"]
+    # import json
+    # print(f"==========Reflection Chain Raw Response============\n {response}")
+    # result = json.loads(response)
+    quality_score = response.quality_score
+    critique = response.critique
 
     print(f"Reflection Count: {state['reflection_count']}, Quality Score: {quality_score}")
     return {

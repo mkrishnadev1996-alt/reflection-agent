@@ -1,4 +1,5 @@
 from pydantic import BaseModel, Field
+from langchain_core.output_parsers import PydanticOutputParser
 from llm import llm
 from prompts import GENERATION_PROMPT, REFLECTION_PROMPT
 
@@ -13,7 +14,8 @@ class ReflectionResponse(BaseModel):
 generate_chain = GENERATION_PROMPT | llm
 
 # Reflection chain: takes conversation history -> critiques tweet and provides quality score
-reflect_chain = REFLECTION_PROMPT | llm
+# Uses PydanticOutputParser to ensure the LLM's response is valid JSON that can be parsed into the ReflectionResponse model
+reflect_chain = REFLECTION_PROMPT | llm | PydanticOutputParser(pydantic_object=ReflectionResponse)
 
 if __name__ == "__main__":
     # Test script to verify chains are working correctly
