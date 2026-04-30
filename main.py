@@ -52,21 +52,18 @@ def reflect(state: State) -> dict:
 
     Args:        state (State): The current state of the agent, including the conversation history, reflection count, and quality score.
     Returns:        dict: A dictionary containing the updated conversation history with the critique from the reflection agent, the updated reflection count, and the quality score from the latest reflection.'''
+
     print("In Reflector agent...")
     new_count = state["reflection_count"] + 1
 
+    # Invoke the reflection chain with the conversation history to get a critique and quality score for the generated tweet. The chain will analyze the generated tweet, provide detailed feedback, and assign a quality score based on the criteria defined in the reflection system prompt.
     response = reflect_chain.invoke(state["messages"])
-    # import json
-    # print(f"==========Reflection Chain Raw Response============\n {response}")
-    # result = json.loads(response)
-    quality_score = response.quality_score
-    critique = response.critique
 
-    print(f"Reflection Count: {state['reflection_count']}, Quality Score: {quality_score}")
+    print(f"Reflection Count: {state['reflection_count']}, Quality Score: {response.quality_score}")
     return {
-        "messages": [AIMessage(content=critique)],
+        "messages": [AIMessage(content=response.critique)],
         "reflection_count": new_count,
-        "quality_score": quality_score
+        "quality_score": response.quality_score
     }
 
 # Initialize the state graph with the defined schema
