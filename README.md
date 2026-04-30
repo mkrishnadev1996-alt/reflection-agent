@@ -4,7 +4,7 @@ A Twitter post generation agent that uses iterative reflection to improve tweet 
 
 ## Description
 
-This project implements a reflection-based AI agent using LangChain and LangGraph. The agent generates Twitter posts based on user requests and iteratively reflects on them, providing critiques and recommendations for improvement. The process continues up to 3(can be configured) reflections to refine the tweet.
+This project implements a reflection-based AI agent using LangChain and LangGraph. The agent generates Twitter posts based on user requests and iteratively reflects on them, providing critiques and recommendations for improvement. The process uses a hybrid stopping condition: it stops when either the maximum number of reflections is reached OR a quality score threshold is achieved.
 
 The agent consists of two main components:
 - **Generator**: Creates initial and revised Twitter posts
@@ -14,7 +14,9 @@ The agent consists of two main components:
 
 - AI-powered Twitter post generation
 - Iterative reflection for quality improvement
-- Configurable reflection cycles (defaults to 3)
+- Hybrid stopping condition: count-based OR quality-based (stops early when quality >= threshold)
+- Configurable max reflections (default: 3)
+- Configurable quality threshold (default: 8/10)
 - Fast inference using Groq's LLM
 - Modular chain-based architecture
 
@@ -62,23 +64,36 @@ python main.py
 
 When prompted, enter your request for a Twitter post. The agent will:
 1. Generate an initial tweet
-2. Reflect on it and provide critique
+2. Reflect on it, critique, and assign a quality score (1-10)
 3. Generate improved versions based on the reflection
-4. Continue this cycle up to 6 times
+4. Continue this cycle until max iterations OR quality threshold is reached
 
-The final output will be the refined tweet along with the number of reflections performed.
+The final output shows the refined tweet, number of reflections performed, and the final quality score.
 
 ## Configuration
 
-- **Reflection Count**: Modify the `should_reflect` function in `main.py` to change the maximum number of reflections (default: 3)
+Configuration is managed via `config.json`:
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| `max_iterations` | 3 | Maximum number of reflection cycles |
+| `quality_threshold` | 8 | Quality score (1-10) that triggers early stopping |
+| `enable_quality_check` | true | Whether to use quality-based stopping |
+
+The agent stops when **either** condition is met:
+- Reflection count reaches `max_iterations`, OR
+- Quality score reaches `quality_threshold`
+
+**Other settings:**
 - **Prompts**: Customize the generation and reflection prompts in `chains.py`
 - **LLM Model**: Change the model in `llm.py` or via the `GROQ_MODEL` environment variable
 
 ## Project Structure
 
-- `main.py`: Main script with the LangGraph workflow
-- `chains.py`: Defines the generation and reflection chains
+- `main.py`: Main script with the LangGraph workflow and hybrid stopping logic
+- `chains.py`: Defines the generation and reflection chains with quality scoring
 - `llm.py`: LLM configuration using ChatGroq
+- `config.json`: Configuration for max iterations and quality threshold
 - `requirements.txt`: Python dependencies
 - `pyproject.toml`: Project metadata
 
